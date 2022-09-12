@@ -24,13 +24,13 @@ int verif_extension(char *file)
     return (1);
 }
 
-int     parse_info(char *line, int ismap, t_texture_wall *w_texture)
+int     put_info(char *line, int ismap, t_texture_wall *w_texture)
 {
 	char **new_line; //fuck norme
 
 	new_line = ft_split(line, 32);
 	if (!new_line)
-		return (-1);
+		return (-1);	
 	if (ft_strncmp(new_line[0], "\n", 2))
 	{
 		if (!ft_strncmp(new_line[0], "NO", 3))
@@ -48,16 +48,31 @@ int     parse_info(char *line, int ismap, t_texture_wall *w_texture)
 		else
 			ismap = 1;
 		if (ismap == 0 && nword(line, 32) != 2)
-			return (-1) //error arg info;
+			return (-1); //error arg info;
 	}
 	free_split(new_line);
     return (ismap);
 }
 
+int parse_info(int ismap, int fd, t_texture_wall *w_texture)
+{
+	char *line;
+
+	while (ismap == 0)
+	{
+		line = get_next_line(fd);
+		if (!line)
+			return (-1); //malloc fail;
+		ismap = put_info(line, ismap, w_texture);
+		printf("%s", line);
+		free(line);
+	}
+	return (ismap);
+}
+
 char    **parse_map(char *file, t_texture_wall *w_texture)
 {
     int     fd;
-    char    *line;
     int     ismap;
 
 	ismap = 0;
@@ -66,21 +81,9 @@ char    **parse_map(char *file, t_texture_wall *w_texture)
     fd = open(file, O_RDONLY);
     if (!fd)
         return (NULL);
-	while (ismap == 0)
-	{
-		line = get_next_line(fd);
-		if (!line)
-		{
-			ismap = -1;
-			break ;
-		}
-		ismap = parse_info(line, ismap, w_texture);
-		free(line);
-	}
-	while (ismap == 1)
-	{
-
-	}
+	ismap = parse_info(ismap, fd, w_texture);
+	if (ismap <= 0)
+		return (NULL);
 	return (NULL);
 }
 
