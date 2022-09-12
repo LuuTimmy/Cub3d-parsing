@@ -46,45 +46,83 @@ int     put_info(char *line, int ismap, t_texture_wall *w_texture)
 		else if (!ft_strncmp(new_line[0], "C", 2))
 			w_texture->ceiling = new_line[1];
 		else
-			ismap = 1;
-		if (ismap == 0 && nword(line, 32) != 2)
+			ismap = 0;
+		if (ismap == 1 && nword(line, 32) != 2)
 			return (-1); //error arg info;
 	}
 	free_split(new_line);
     return (ismap);
 }
 
-int parse_info(int ismap, int fd, t_texture_wall *w_texture)
+int parse_info(int fd, t_texture_wall *w_texture)
 {
 	char *line;
+	int ismap;
+	int nb_line_info;
 
-	while (ismap == 0)
+	ismap = 1;
+	nb_line_info = 0;
+	while (ismap == 1)
 	{
 		line = get_next_line(fd);
 		if (!line)
 			return (-1); //malloc fail;
 		ismap = put_info(line, ismap, w_texture);
-		printf("%s", line);
 		free(line);
+		nb_line_info++;
 	}
-	return (ismap);
+	//verif info;
+	return (nb_line_info);
 }
 
-char    **parse_map(char *file, t_texture_wall *w_texture)
+int	countbit(char *argv)
+{
+	char	buff[1];
+	int		nbbit;
+
+	nbbit = 0;
+	while (read(fd, buff, 1) > 0)
+		nbbit++;
+	return (nbbit);
+}
+
+char	**parse_map(int fd, int nb_line_info)
+{
+	char **map;
+	char *str;
+
+	while(nb_line_info > 0)
+	{
+		str = get_next_line(fd);
+		printf("%s", str);
+		nb_line_info--;
+		free(str);
+	}
+	
+	
+}
+
+char    **parse_file(char *file, t_texture_wall *w_texture)
 {
     int     fd;
-    int     ismap;
+    int     nb_line_info;
+	char	**map;
 
-	ismap = 0;
+	nb_line_info = 0;
     if (verif_extension(file) == 0)
         return (NULL);
     fd = open(file, O_RDONLY);
     if (!fd)
         return (NULL);
-	ismap = parse_info(ismap, fd, w_texture);
-	if (ismap <= 0)
+	nb_line_info = parse_info(fd, w_texture);
+	if (nb_line_info < 0)
 		return (NULL);
-	return (NULL);
+	close(fd);
+	fd = open(file, O_RDONLY);
+    if (!fd)
+        return (NULL);
+	map = parse_map(fd, nb_line_info - 1);
+	return (map);
 }
 
 int main(int argc, char **argv)
@@ -94,7 +132,7 @@ int main(int argc, char **argv)
 
     if (argc != 2)
         return (0);
-    map = parse_map(argv[1], &w_texture);
+    map = parse_file(argv[1], &w_texture);
     // if (!map)
     //     return (0);
 }
