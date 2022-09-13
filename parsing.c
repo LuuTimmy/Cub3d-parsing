@@ -30,7 +30,7 @@ int     put_info(char *line, int ismap, t_texture_wall *w_texture)
 
 	new_line = ft_split(line, 32);
 	if (!new_line)
-		return (-1);	
+		return (-1); // malloc
 	if (ft_strncmp(new_line[0], "\n", 2))
 	{
 		if (!ft_strncmp(new_line[0], "NO", 3))
@@ -47,81 +47,136 @@ int     put_info(char *line, int ismap, t_texture_wall *w_texture)
 			w_texture->ceiling = new_line[1];
 		else
 			ismap = 0;
-		if (ismap == 1 && nword(line, 32) != 2)
+		if (ismap == 1 && nword(line, 32) != 2) //2 arg ? pas obligé >=3
 			return (-1); //error arg info;
 	}
 	free_split(new_line);
     return (ismap);
 }
 
-int parse_info(int fd, t_texture_wall *w_texture)
+void	parse_other_texture(t_texture_wall *w_texture, void *texture)
+{
+	//verif texture; 
+	if (texture && nword(texture, ',') != 3)
+	{
+		//put default color
+	}
+	else
+	{
+		//texture == color de base; 
+	}
+}
+
+char	*parse_info(int fd, t_texture_wall *w_texture)
 {
 	char *line;
 	int ismap;
-	int nb_line_info;
 
 	ismap = 1;
-	nb_line_info = 0;
 	while (ismap == 1)
 	{
 		line = get_next_line(fd);
 		if (!line)
-			return (-1); //malloc fail;
+			return (NULL); //malloc fail;
 		ismap = put_info(line, ismap, w_texture);
-		free(line);
-		nb_line_info++;
+		if (ismap != 0)
+			free(line);
 	}
-	//verif info;
-	return (nb_line_info);
+	parse_other_texture(w_texture, w_texture->floor);
+	return (line);
 }
 
-int	countbit(char *argv)
+int verif_map2(char **map, int i, int j)
 {
-	char	buff[1];
-	int		nbbit;
+	int len;
 
-	nbbit = 0;
-	while (read(fd, buff, 1) > 0)
-		nbbit++;
-	return (nbbit);
+	len = 0;
+	while(map[len])
+		len++;
+	if (!verifset(map[i][j], " 01NSEW"))
+		return (0);
+	if ((i == 0 || j == 0 || i == len - 1 || j == ft_strlen(map[i]) - 1)
+		&& !verifset(map[i][j], " 1"))
+		return (0);
+	if (map[i][j] == ' ')
+	{
+		if ((i > 0 && !verifset(map[i - 1][j], " 1")) || (i < len - 1 && !verifset(map[i + 1][j], "1 ")))
+			return (0);
+		if ((j > 0 && !verifset(map[i][j - 1], " 1")) || (j < ft_strlen(map[i]) -1 && !verifset(map[i][j + 1], "1 ")))
+			return (0);
+	}
+	return (1);
 }
 
-char	**parse_map(int fd, int nb_line_info)
+int verif_map(char **map)
+{
+	int i;
+	int j;
+	int isplayer;
+
+	i = 0;
+	isplayer = 0;
+	while (map[i])
+	{	
+		j = 0;
+		while (map[i][j])
+		{
+			if (!verif_map2(map, i, j))
+				return (0);
+			if (verifset(map[i][j], "NSEW") && !isplayer)
+			{
+				isplayer = 1;
+				
+			}
+			else if (verifset(map[i][j], "NSEW") && isplayer)
+			{
+				//newposition
+				//ancien position = 0;
+			}
+			j++;
+		}
+		i++;
+	}
+	return (1);
+}
+
+char	**parse_map(int fd, char *temp)
 {
 	char **map;
 	char *str;
+	char *fstr;
 
-	while(nb_line_info > 0)
+	str = get_next_line(fd); //verif si la carte peut avoir des espaces àa la fin 
+	while(str != NULL)
 	{
-		str = get_next_line(fd);
-		printf("%s", str);
-		nb_line_info--;
+		fstr = ft_strjoin(temp, str);
+		free(temp);
 		free(str);
+		temp = fstr;
+		str = get_next_line(fd);
 	}
-	
-	
+	free(str);
+	map = ft_split(temp, '\n');
+	if (!verif_map(map))
+		return (NULL);
+	return (map);
 }
 
 char    **parse_file(char *file, t_texture_wall *w_texture)
 {
     int     fd;
-    int     nb_line_info;
+    char	*str;
 	char	**map;
 
-	nb_line_info = 0;
     if (verif_extension(file) == 0)
         return (NULL);
     fd = open(file, O_RDONLY);
     if (!fd)
         return (NULL);
-	nb_line_info = parse_info(fd, w_texture);
-	if (nb_line_info < 0)
+	str = parse_info(fd, w_texture);
+	if (!str) //pas de map
 		return (NULL);
-	close(fd);
-	fd = open(file, O_RDONLY);
-    if (!fd)
-        return (NULL);
-	map = parse_map(fd, nb_line_info - 1);
+	map = parse_map(fd, str);
 	return (map);
 }
 
@@ -133,6 +188,8 @@ int main(int argc, char **argv)
     if (argc != 2)
         return (0);
     map = parse_file(argv[1], &w_texture);
-    // if (!map)
-    //     return (0);
+    if (!map)
+        return (0);
+	free(map);
+	system("leaks app");
 }

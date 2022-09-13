@@ -17,5 +17,6 @@ char	**ft_split(char const *s, char c);
 void	free_split(char **fstr);
 int		nword(char const *s, char c);
 char	*ft_strjoin(char const *s1, char const *s2);
+int     verifset(char c, const char *set);
 
 #endif

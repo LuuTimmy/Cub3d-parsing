@@ -56,7 +56,7 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 	return (str);
 }
 
-static int	verifset(char c, const char *set)
+int	verifset(char c, const char *set)
 {
 	int	i;
 
