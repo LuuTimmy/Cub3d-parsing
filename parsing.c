@@ -1,7 +1,17 @@
 #include "parsing.h"
-#include "gnl_leak/get_next_line.h"
+#include "vgnl/get_next_line.h"
 
-typedef struct s_texture_wall
+typedef struct s_hero
+{
+	double	pos_x;					// position de depart en x
+	double	pos_y;
+	double	dir_x;					// direction de depart en x
+	double	dir_y;
+	double	plane_x;				// demi-largeur du plan de focale en x
+	double	plane_y;
+}	t_hero;
+
+typedef struct s_texture
 {
 	char *w_north;
     char *w_south;
@@ -10,7 +20,14 @@ typedef struct s_texture_wall
 
 	char *floor;
 	char *ceiling;
-}	t_texture_wall;
+}	t_texture;
+
+typedef struct s_data
+{
+	char		**map;
+	t_hero		*hero;
+	t_texture	*texture;
+}	t_data;
 
 int verif_extension(char *file)
 {
@@ -24,65 +41,71 @@ int verif_extension(char *file)
     return (1);
 }
 
-int     put_info(char *line, int ismap, t_texture_wall *w_texture)
+int     put_info(char *line, int ismap, t_texture *texture, char *info[6])
 {
-	char **new_line; //fuck norme
+	char **new_line;
 
 	new_line = ft_split(line, 32);
 	if (!new_line)
 		return (-1); // malloc
 	if (ft_strncmp(new_line[0], "\n", 2))
 	{
-		if (!ft_strncmp(new_line[0], "NO", 3))
-			w_texture->w_north = new_line[1];
-		else if (!ft_strncmp(new_line[0], "SO", 3))
-			w_texture->w_south = new_line[1];
-		else if (!ft_strncmp(new_line[0], "WE", 3))
-			w_texture->w_west = new_line[1];
-		else if (!ft_strncmp(new_line[0], "EA", 3))
-			w_texture->w_east = new_line[1];
-		else if (!ft_strncmp(new_line[0], "F", 2))
-			w_texture->floor = new_line[1];
-		else if (!ft_strncmp(new_line[0], "C", 2))
-			w_texture->ceiling = new_line[1];
-		else
-			ismap = 0;
-		if (ismap == 1 && nword(line, 32) != 2) //2 arg ? pas obligé >=3
-			return (-1); //error arg info;
+		if (ismap < 7 && !ft_strncmp(new_line[0], info[ismap], ft_strlen(info[ismap])))
+            ismap++;
+        else
+            ismap = -1;
+		if (nword(line, 32) != 2)
+			ismap = -1;
 	}
 	free_split(new_line);
     return (ismap);
 }
 
-void	parse_other_texture(t_texture_wall *w_texture, void *texture)
+char    **define_info(char *info[6])
 {
-	//verif texture; 
-	if (texture && nword(texture, ',') != 3)
-	{
-		//put default color
-	}
-	else
-	{
-		//texture == color de base; 
-	}
+    int i;
+
+    info[0] = ft_strdup("NO");
+    info[1] = ft_strdup("SO");
+    info[2] = ft_strdup("WE");
+    info[3] = ft_strdup("EA");
+    info[4] = ft_strdup("F");
+    info[5] = ft_strdup("C");
+
+    i = 0;
+    while (i < 6)
+    {
+        if (!info[i])
+            return (NULL); //malloc fail
+        i++;
+    }
+    return (info);
 }
 
-char	*parse_info(int fd, t_texture_wall *w_texture)
+char	*parse_info(int fd, t_texture *texture)
 {
-	char *line;
-	int ismap;
+	char    *line;
+	int     ismap;
+    char    *info[6];
 
-	ismap = 1;
-	while (ismap == 1)
+	ismap = 0;
+    if (!define_info(info))
+        return (NULL);
+	while (ismap >= 0)
 	{
 		line = get_next_line(fd);
 		if (!line)
 			return (NULL); //malloc fail;
-		ismap = put_info(line, ismap, w_texture);
-		if (ismap != 0)
+		ismap = put_info(line, ismap, texture, info);
+		if (ismap >= 0)
 			free(line);
 	}
-	parse_other_texture(w_texture, w_texture->floor);
+	ismap = 0;
+	while (ismap < 6)
+	{
+		free(info[ismap]);
+		ismap++;
+	}
 	return (line);
 }
 
@@ -140,13 +163,13 @@ int verif_map(char **map)
 	return (1);
 }
 
-char	**parse_map(int fd, char *temp)
+char	**parse_map(int fd, char *temp, t_hero *hero)
 {
 	char **map;
 	char *str;
 	char *fstr;
 
-	str = get_next_line(fd); //verif si la carte peut avoir des espaces àa la fin 
+	str = get_next_line(fd);
 	while(str != NULL)
 	{
 		fstr = ft_strjoin(temp, str);
@@ -162,7 +185,7 @@ char	**parse_map(int fd, char *temp)
 	return (map);
 }
 
-char    **parse_file(char *file, t_texture_wall *w_texture)
+char    **parse_file(char *file, t_data *data)
 {
     int     fd;
     char	*str;
@@ -173,23 +196,21 @@ char    **parse_file(char *file, t_texture_wall *w_texture)
     fd = open(file, O_RDONLY);
     if (!fd)
         return (NULL);
-	str = parse_info(fd, w_texture);
+	str = parse_info(fd, data->texture);
 	if (!str) //pas de map
 		return (NULL);
-	map = parse_map(fd, str);
+	map = parse_map(fd, str, data->hero);
 	return (map);
 }
 
 int main(int argc, char **argv)
 {
-    char **map;
-	t_texture_wall w_texture;
+	t_data data;
 
-    if (argc != 2)
-        return (0);
-    map = parse_file(argv[1], &w_texture);
-    if (!map)
-        return (0);
-	free(map);
-	system("leaks app");
+	if (argc != 2)
+		return (0);
+	char **map = parse_file(argv[1], &data);
+	if (!map)
+		return (0);
+	free_split(map);
 }
