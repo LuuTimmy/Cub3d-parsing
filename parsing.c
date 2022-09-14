@@ -1,5 +1,5 @@
 #include "parsing.h"
-#include "vgnl/get_next_line.h"
+#include "gnl_leak/get_next_line.h"
 
 typedef struct s_hero
 {
@@ -50,7 +50,7 @@ int     put_info(char *line, int ismap, t_texture *texture, char *info[6])
 		return (-1); // malloc
 	if (ft_strncmp(new_line[0], "\n", 2))
 	{
-		if (ismap < 7 && !ft_strncmp(new_line[0], info[ismap], ft_strlen(info[ismap])))
+		if (ismap < 6 && !ft_strncmp(new_line[0], info[ismap], ft_strlen(info[ismap])))
             ismap++;
         else
             ismap = -1;
@@ -118,30 +118,22 @@ int verif_map2(char **map, int i, int j)
 	while(map[len])
 		len++;
 	if (!verifset(map[i][j], " 01NSEW"))
-    {
-        printf("-1\n");
 		return (0);
-    }
 	if ((i == 0 || j == 0 || i == len - 1 || j == ft_strlen(map[i]) - 1)
 		&& !verifset(map[i][j], " 1"))
-    {
-        printf("%c %d %d\n", map[i][j], i, j);
-        printf("-2\n");
 		return (0);
-    }
 	if (map[i][j] == ' ')
 	{
-		if ((i > 0 && !verifset(map[i - 1][j], " 1")) || (i < len - 1 && !verifset(map[i + 1][j], "1 ")))
-        {
-            printf("%c %d %d\n", map[i][j], i, j);
-            printf("-3\n");
+		if (i > 0 && ft_strlen(map[i - 1]) > j 
+			&& !verifset(map[i - 1][j], " 1"))
 			return (0);
-        }
-		if ((j > 0 && !verifset(map[i][j - 1], " 1")) || (j < ft_strlen(map[i]) -1 && !verifset(map[i][j + 1], "1 ")))
-        {
-            printf("-4\n");
+		if (i < len - 1 && ft_strlen(map[i + 1]) > j 
+			&& !verifset(map[i + 1][j], "1 "))
 			return (0);
-        }
+		if (j > 0 && !verifset(map[i][j - 1], " 1"))
+			return (0);
+		if (j < ft_strlen(map[i]) - 1 && !verifset(map[i][j + 1], "1 "))
+			return (0);
 	}
 	return (1);
 }
@@ -157,13 +149,12 @@ int verif_map(char **map, t_hero *hero)
 	while (map[i])
 	{	
 		j = 0;
-		while (map[i][j] != '\0')
+		while (map[i][j])
 		{
 			if (!verif_map2(map, i, j))
 				return (0);
 			if (verifset(map[i][j], "NSEW"))
 			{
-                printf("+1\n");
                 hero->pos_x = j;
                 hero->pos_y = i;
 				isplayer++;
@@ -172,7 +163,7 @@ int verif_map(char **map, t_hero *hero)
 		}
 		i++;
 	}
-    if (isplayer)
+    if (!isplayer)
         return (0);
 	return (1);
 }
@@ -211,7 +202,7 @@ char    **parse_file(char *file, t_data *data)
     if (!fd)
         return (NULL);
 	str = parse_info(fd, data->texture);
-	if (!str) //pas de map
+	if (!str)
 		return (NULL);
 	map = parse_map(fd, str, data->hero);
 	return (map);
@@ -225,6 +216,9 @@ int main(int argc, char **argv)
 		return (0);
 	char **map = parse_file(argv[1], &data);
 	if (!map)
+	{
+		printf("ERRRORRRR\n");
 		return (0);
+	}
 	free_split(map);
 }
