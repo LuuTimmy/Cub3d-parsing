@@ -89,8 +89,9 @@ char	*parse_info(int fd, t_texture *texture)
     char    *info[6];
 
 	ismap = 0;
+    line = NULL;
     if (!define_info(info))
-        return (NULL);
+        ismap = -1;
 	while (ismap >= 0)
 	{
 		line = get_next_line(fd);
@@ -100,7 +101,7 @@ char	*parse_info(int fd, t_texture *texture)
 		if (ismap >= 0)
 			free(line);
 	}
-	ismap = 0;
+    ismap = 0;
 	while (ismap < 6)
 	{
 		free(info[ismap]);
@@ -117,21 +118,35 @@ int verif_map2(char **map, int i, int j)
 	while(map[len])
 		len++;
 	if (!verifset(map[i][j], " 01NSEW"))
+    {
+        printf("-1\n");
 		return (0);
+    }
 	if ((i == 0 || j == 0 || i == len - 1 || j == ft_strlen(map[i]) - 1)
 		&& !verifset(map[i][j], " 1"))
+    {
+        printf("%c %d %d\n", map[i][j], i, j);
+        printf("-2\n");
 		return (0);
+    }
 	if (map[i][j] == ' ')
 	{
 		if ((i > 0 && !verifset(map[i - 1][j], " 1")) || (i < len - 1 && !verifset(map[i + 1][j], "1 ")))
+        {
+            printf("%c %d %d\n", map[i][j], i, j);
+            printf("-3\n");
 			return (0);
+        }
 		if ((j > 0 && !verifset(map[i][j - 1], " 1")) || (j < ft_strlen(map[i]) -1 && !verifset(map[i][j + 1], "1 ")))
+        {
+            printf("-4\n");
 			return (0);
+        }
 	}
 	return (1);
 }
 
-int verif_map(char **map)
+int verif_map(char **map, t_hero *hero)
 {
 	int i;
 	int j;
@@ -142,24 +157,23 @@ int verif_map(char **map)
 	while (map[i])
 	{	
 		j = 0;
-		while (map[i][j])
+		while (map[i][j] != '\0')
 		{
 			if (!verif_map2(map, i, j))
 				return (0);
-			if (verifset(map[i][j], "NSEW") && !isplayer)
+			if (verifset(map[i][j], "NSEW"))
 			{
-				isplayer = 1;
-				
-			}
-			else if (verifset(map[i][j], "NSEW") && isplayer)
-			{
-				//newposition
-				//ancien position = 0;
+                printf("+1\n");
+                hero->pos_x = j;
+                hero->pos_y = i;
+				isplayer++;
 			}
 			j++;
 		}
 		i++;
 	}
+    if (isplayer)
+        return (0);
 	return (1);
 }
 
@@ -180,7 +194,7 @@ char	**parse_map(int fd, char *temp, t_hero *hero)
 	}
 	free(str);
 	map = ft_split(temp, '\n');
-	if (!verif_map(map))
+	if (!verif_map(map, hero))
 		return (NULL);
 	return (map);
 }
