@@ -35,6 +35,19 @@ char    **define_info(char *info[6]) // A FREE;
     return (info);
 }
 
+void	*free_info(char *info[6]) //freein fo dqns toutes les erreurs;
+{
+	int i;
+
+	i = 0;
+	while (i < 6)
+	{
+		free(info[i]);
+		i++;
+	}
+	return (NULL);
+}
+
 char **parse_file(char *file, t_data *data)
 {
 	int		fd;
@@ -51,11 +64,14 @@ char **parse_file(char *file, t_data *data)
 	skip_line = search_map_info(fd, data, info);
 	close(fd);
 	if (skip_line == -1)
-		return (NULL);
+		return (free_info(info));
 	fd = open(file, O_RDONLY);
 	if (!fd)
-		return (NULL);
-		
+		return (free_info(info));
+	if (!parsing_map(data, fd, skip_line))
+		return (free_info(info));
+	free_info(info);
+	return (data->map);
 }
 
 int main(int argc, char **argv)
@@ -63,10 +79,12 @@ int main(int argc, char **argv)
 	t_data data;
 	if (argc != 2)
 		return (0);
-	if (!parse_file(argv[1], &data) || !data.map);
+	if (!parse_file(argv[1], &data) || !data.map)
 	{
-		//printf("Error: MAP\n");
+		printf("Error: MAP\n");
 		return (0);
 	}
+	printf("Good: MAP\n");
+	free_split(data.map);
 	return (1);
 }

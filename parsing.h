@@ -10,8 +10,8 @@
 
 typedef struct s_hero
 {
-	double	pos_x;					// position de depart en x
-	double	pos_y;
+	int		pos_x;					// position de depart en x
+	int		pos_y;
 	double	dir_x;					// direction de depart en x
 	double	dir_y;
 	double	plane_x;				// demi-largeur du plan de focale en x
@@ -56,7 +56,7 @@ typedef struct s_map_info
 typedef struct s_data
 {
 	char	**map;
-	t_hero	*hero;
+	t_hero	hero;
 	t_libx	*libx;
     t_map_info   *map_info;
 }	t_data;
@@ -72,11 +72,14 @@ void	free_split(char **fstr);
 int		nword(char const *s, char c);
 char	*ft_strjoin(char const *s1, char const *s2);
 int     verifset(char c, const char *set);
+size_t	ft_strlcpy_cub(char *dest, const char *src, size_t size);
+void	*ft_memset(void *s, int c, size_t n);
 
 //parsing
 
 
 //parsing_info
 int	search_map_info(int fd, t_data *data, char **info);
+void    *parsing_map(t_data *data, int fd, int skip_line);
 
 #endif

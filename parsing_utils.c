@@ -87,10 +87,6 @@ int	ft_strncmp(const char *s1, const char *s2, size_t n)
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
 
-
-
-
-
 int	nword(char const *s, char c)
 {
 	int	i;
@@ -196,4 +192,38 @@ char	*ft_strjoin(char const *s1, char const *s2)
 	}
 	fstr[i] = '\0';
 	return (fstr);
+}
+
+size_t	ft_strlcpy_cub(char *dest, const char *src, size_t size)
+{
+	unsigned int	i;
+	unsigned int	j;
+
+	i = 0;
+	j = 0;
+	while (src[j] != '\0')
+		j++;
+	if (size < 1)
+		return (j);
+	while (src[i] != '\0' && i < size - 1)
+	{
+		dest[i] = src[i];
+		i++;
+	}
+	return (j);
+}
+
+void	*ft_memset(void *s, int c, size_t n)
+{
+	size_t			i;
+	unsigned char	*str;
+
+	i = 0;
+	str = (unsigned char *)s;
+	while (i < n)
+	{
+		str[i] = c;
+		i++;
+	}
+	return (str);
 }

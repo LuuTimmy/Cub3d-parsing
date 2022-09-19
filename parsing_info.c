@@ -1,12 +1,12 @@
 #include "parsing.h"
 #include "gnl_leak/get_next_line.h"
 
-int verif_info(char **newline, char *line, char **info)
+int verif_info(char **newline, char *line, char **info, t_libx *libx)
 {
 
 }
 
-int put_info(char *line, char **info, int ismap)
+int put_info(char *line, char **info, int ismap, t_data *data)
 {
 	int i;
 	char	**new_line;
@@ -21,7 +21,7 @@ int put_info(char *line, char **info, int ismap)
 		{
 			if (!ft_strncmp(new_line[0], info[i], ft_strlen(info[i]) + 1))
 			{
-				verif_info(new_line, line, info);
+				verif_info(new_line, line, info, data->libx);
 				ismap++;
 				break ;
 			}
@@ -39,18 +39,20 @@ int put_size_map2(t_data *data, int length, int height)
     int i;
 
     i = 0;
-    data->map = malloc(sizeof(char *) * height + 1);
+    data->map = (char **)malloc(sizeof(char *) * (height + 1));
+    data->map[height] = NULL;
     if (data->map == NULL)
         return (0);
     while (i < height)
     {
-        data->map[i] = malloc(sizeof(char) * length + 1);
+        data->map[i] = (char *)malloc(sizeof(char) * (length + 1));
         if (!data->map[i])
         {
             free_split(data->map);
             return (0); //malloc error;
         }
-        memset(data->map[i], ' ', length);  //remplace with ft_
+        data->map[i][length] = '\0';
+        ft_memset(data->map[i], 32, length);  //remplace with ft_
         i++;
     }
     return (1);
@@ -93,13 +95,13 @@ int	search_map_info(int fd, t_data *data, char **info)
 		line = get_next_line(fd);
 		if (!line)
 			return (-1); //no map
-		ismap = put_info(line, info, ismap);
+		ismap = put_info(line, info, ismap, data);
         nb_line++;
 	}
     //verif_info si y'a tout les élements
 	if (!put_size_map(data, fd, line))
 		return (-1);
     if (nb_line == 0)
-        return (0);
-    return (nb_line - 1);
+        return (nb_line);
+    return (nb_line);
 }
