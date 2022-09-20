@@ -53,22 +53,29 @@ char **parse_file(char *file, t_data *data)
 	int		fd;
 	char	*info[6];
 	int		skip_line;
+	char	**map_temp;
 
+	data->libx.txtr_w_north = NULL; //function init 
+	data->libx.txtr_w_south = NULL;
+	data->libx.txtr_w_east = NULL;
+	data->libx.txtr_w_west = NULL;
+	data->libx.texture_floor = 0;
+	data->libx.texture_ceiling = 0;
 	if (!verif_extension(file))
 		return (NULL);
 	fd = open(file, O_RDONLY);
 	if (!fd)
 		return (NULL);
-	if (!define_info(info)) //A FREE parrrtouttt
+	if (!define_info(info))
+	{
+		close(fd);
 		return (NULL);
-	skip_line = search_map_info(fd, data, info);
+	}
+	map_temp = search_map_info(fd, data, info);
 	close(fd);
-	if (skip_line == -1)
+	if (!map_temp)
 		return (free_info(info));
-	fd = open(file, O_RDONLY);
-	if (!fd)
-		return (free_info(info));
-	if (!parsing_map(data, fd, skip_line))
+	if (!parsing_map(data, map_temp))
 		return (free_info(info));
 	free_info(info);
 	return (data->map);
@@ -84,7 +91,16 @@ int main(int argc, char **argv)
 		printf("Error: MAP\n");
 		return (0);
 	}
-	printf("Good: MAP\n");
+	printf("%s\n", data.libx.txtr_w_north);
+	printf("%s\n", data.libx.txtr_w_south);
+	printf("%s\n", data.libx.txtr_w_west);
+	printf("%s\n", data.libx.txtr_w_east);
+	printf("%d\n", data.libx.texture_floor);
+	printf("%d\n", data.libx.texture_ceiling);
+	printf("%d\n", data.hero.pos_x);
+	printf("%d\n", data.hero.pos_y);
+
 	free_split(data.map);
+	printf("Good: MAP\n");
 	return (1);
 }

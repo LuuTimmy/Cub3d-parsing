@@ -1,25 +1,6 @@
 #include "parsing.h"
 #include "gnl_leak/get_next_line.h"
 
-void    put_map(t_data *data, int fd)
-{
-    char *str;
-    int i;
-
-    i = 0;
-    while (data->map[i])
-    {
-        str = get_next_line(fd);
-        if (str[ft_strlen(str) - 1] == '\n')
-            ft_strlcpy_cub(data->map[i], str, ft_strlen(str));
-        else
-            ft_strlcpy_cub(data->map[i], str, ft_strlen(str) + 1);
-        i++;
-        free(str);
-    }
-    close(fd);
-}
-
 int verif_map2(t_data *data, int i, int j, int len)
 {
     if (!verifset(data->map[i][j], " 01NSEW"))
@@ -41,6 +22,19 @@ int verif_map2(t_data *data, int i, int j, int len)
     return (1);
 }
 
+int put_hero(t_data *data, int i, int j)
+{
+    if (!verifset(data->map[i][j], "NESW"))
+        return (0);
+    data->hero.pos_x = i;
+    data->hero.pos_y = j;
+    //data->hero.dir_x =
+    //data->hero.dir_y =
+    //data->hero.plane_x = 0.66 * data->hero.dir_x
+    //data->hero.plane_y = -0.66 * data->hero.dir_y
+    data->map[i][j] = 0;
+    return (1);
+}
 
 int verif_map(t_data *data, t_hero *hero)
 {
@@ -61,6 +55,7 @@ int verif_map(t_data *data, t_hero *hero)
 				return (0);
             if (data->map[i][j] == 32)
                 data->map[i][j] = '1';
+            put_hero(data, i, j);
 			j++;
 		}
 		i++;
@@ -68,19 +63,64 @@ int verif_map(t_data *data, t_hero *hero)
 	return (1);
 }
 
-void    *parsing_map(t_data *data, int fd, int skip_line)
+int     put_map2(t_data *data, char **map_temp, int len, int height)
+{
+    int i;
+
+    i = 0;
+    while (i < height)
+    {
+        data->map[i] = (char *)malloc(sizeof(char) * len + 1);
+        if (!data->map[i])
+            return (0);
+        data->map[i][len] = '\0';
+        ft_memset(data->map[i], 32, len);
+        if (map_temp[i][ft_strlen(map_temp[i]) - 1] == '\n')
+            ft_strlcpy_cub(data->map[i], map_temp[i], ft_strlen(map_temp[i]));
+        else
+            ft_strlcpy_cub(data->map[i], map_temp[i], ft_strlen(map_temp[i]) + 1);
+        i++;
+    }
+    return (1);
+}
+
+char    **put_map(t_data *data, char **map_temp)
+{
+    int i;
+    int len;
+    int width;
+
+    i = 0;
+    len = 0;
+    width = 0;
+    while(map_temp[i])
+    {   
+        if (ft_strlen(map_temp[i]) > len)
+            len = ft_strlen(map_temp[i]);
+        width++; 
+        i++;
+    }
+    data->map = (char **)malloc(sizeof(char *) * (width + 1));
+    if (!data->map)
+        return (NULL);
+    data->map[width] = 0;
+    if (!put_map2(data, map_temp, len, width))
+        return (NULL);
+    return (data->map);
+}
+
+void    *parsing_map(t_data *data, char **map_temp)
 {
     int i;
     char *str;
     int len;
 
-    while (skip_line > 0)
+    data->map = put_map(data, map_temp);
+    if (!data->map)
     {
-        str = get_next_line(fd);
-        free(str);
-        skip_line--;
+        free(map_temp);
+        return (NULL);
     }
-    put_map(data, fd);
     if (!verif_map(data, &data->hero))
         return (NULL);
     return(data);

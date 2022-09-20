@@ -34,14 +34,14 @@ typedef struct s_libx
 {
 	void	*mlx_ptr;
 	void	*mlx_win;
-	//t_img	txtr[4];
-    t_img   *texture_wall_north;
-    t_img   *texture_wall_south;
-    t_img   *texture_wall_east;
-    t_img   *texture_wall_west;
+	t_img	txtr[4];
+    char	*txtr_w_north;
+    char	*txtr_w_south;
+    char	*txtr_w_east;
+    char	*txtr_w_west;
 
-    int texture_floor;
-    int texture_ceiling;
+    unsigned int texture_floor;
+    unsigned int texture_ceiling;
 	t_img	*img;
 }	t_libx;
 
@@ -57,7 +57,7 @@ typedef struct s_data
 {
 	char	**map;
 	t_hero	hero;
-	t_libx	*libx;
+	t_libx	libx;
     t_map_info   *map_info;
 }	t_data;
 
@@ -74,12 +74,16 @@ char	*ft_strjoin(char const *s1, char const *s2);
 int     verifset(char c, const char *set);
 size_t	ft_strlcpy_cub(char *dest, const char *src, size_t size);
 void	*ft_memset(void *s, int c, size_t n);
+char	*ft_strtrim(char const *s1, char const *set);
+int		ft_atoi_v(const char *str, int *is_false);
+int		count_char(char *str, char c);
 
 //parsing
 
 
 //parsing_info
-int	search_map_info(int fd, t_data *data, char **info);
-void    *parsing_map(t_data *data, int fd, int skip_line);
+char	**search_map_info(int fd, t_data *data, char **info);
+void    *parsing_map(t_data *data, char **map_temp);
+int		parse_texture(char *newline, char *line, char *info, t_libx *libx);
 
 #endif
